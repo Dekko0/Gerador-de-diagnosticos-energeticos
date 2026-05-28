@@ -22,6 +22,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from .config import Config
+from .tectonic_setup import ensure_tectonic
 
 logger = logging.getLogger(__name__)
 
@@ -48,9 +49,19 @@ class CompilationResult:
 # --------------------------------------------------------------------------- #
 def compile_pdf(workdir: Path, out_pdf: Path, config: Config) -> Path:
     """Compila ``workdir/DIAG_PMS.tex`` para PDF e copia para ``out_pdf``."""
-    if not config.tectonic_path.exists():
+    # Garante o binário do Tectonic: usa o do PATH, o portátil em bin/, ou
+    # baixa o estático (Linux/Streamlit Cloud) sob demanda.
+    try:
+        tectonic_bin = ensure_tectonic(config.tectonic_path)
+    except Exception as exc:  # noqa: BLE001 — converte em erro de compilação claro
         raise CompilationError(
-            f"Tectonic não encontrado em {config.tectonic_path}. "
+            f"Falha ao obter o Tectonic: {exc}. "
+            "Baixe manualmente em "
+            "https://github.com/tectonic-typesetting/tectonic/releases."
+        ) from exc
+    if not tectonic_bin.exists():
+        raise CompilationError(
+            f"Tectonic não encontrado em {tectonic_bin}. "
             "Rode o setup ou baixe o binário em "
             "https://github.com/tectonic-typesetting/tectonic/releases."
         )
@@ -61,7 +72,7 @@ def compile_pdf(workdir: Path, out_pdf: Path, config: Config) -> Path:
     out_pdf = Path(out_pdf).resolve()
     out_pdf.parent.mkdir(parents=True, exist_ok=True)
 
-    cmd = [str(config.tectonic_path), *config.tectonic_extra_args,
+    cmd = [str(tectonic_bin), *config.tectonic_extra_args,
            "--outdir", str(workdir), str(main_tex)]
     logger.info("Compilando com Tectonic: %s", " ".join(cmd))
     proc = subprocess.run(
