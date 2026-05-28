@@ -25,9 +25,11 @@ import tempfile
 from pathlib import Path
 
 # `streamlit run app/ui/app.py` coloca `app/ui/` em sys.path mas não a raiz
-# do projeto; garantimos que `from app import ...` funcione.
-if __package__ in (None, ""):
-    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+# do projeto; garantimos (incondicionalmente) que `from app import ...` funcione,
+# tanto localmente quanto no Streamlit Cloud (onde __package__ pode não ser vazio).
+_REPO_ROOT = str(Path(__file__).resolve().parents[2])
+if _REPO_ROOT not in sys.path:
+    sys.path.insert(0, _REPO_ROOT)
 
 import streamlit as st  # noqa: E402
 
