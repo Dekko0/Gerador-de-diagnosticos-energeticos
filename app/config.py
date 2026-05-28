@@ -8,11 +8,27 @@ são todos definidos (e documentados) neste arquivo.
 
 from __future__ import annotations
 
+import os
+import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
 
 # Raiz do projeto (…/Gerador de Diagnosticos)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+
+def _default_tectonic_path() -> Path:
+    """Localiza o Tectonic de forma multiplataforma.
+
+    Procura primeiro no ``PATH`` (ex.: instalado via ``packages.txt``/apt no
+    Linux do Streamlit Cloud); se não encontrar, cai para o binário portátil em
+    ``bin/`` do projeto — ``tectonic.exe`` no Windows, ``tectonic`` nos demais.
+    """
+    found = shutil.which("tectonic")
+    if found:
+        return Path(found)
+    binary = "tectonic.exe" if os.name == "nt" else "tectonic"
+    return PROJECT_ROOT / "bin" / binary
 
 #: Política de resolução de chaves duplicadas com valores divergentes.
 ConflictPolicy = str  # "last-wins" | "first-wins"
@@ -124,7 +140,8 @@ class Config:
     # Compilação LaTeX -> PDF (deliverable PRIMÁRIO)
     # ------------------------------------------------------------------ #
     #: Caminho do Tectonic (XeLaTeX portátil; baixa pacotes do CTAN sob demanda).
-    tectonic_path: Path = PROJECT_ROOT / "bin" / "tectonic.exe"
+    #: Detectado em runtime: ``tectonic`` no PATH ou binário local em ``bin/``.
+    tectonic_path: Path = field(default_factory=_default_tectonic_path)
     #: Argumentos do Tectonic. ``continue-on-errors`` deixa o engine "perdoar"
     #: erros recuperáveis (como o ``\\`` no fim de minipage da capa abntex2),
     #: equivalente ao comportamento padrão do pdflatex/xelatex.
