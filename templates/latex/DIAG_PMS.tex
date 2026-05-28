@@ -1,0 +1,155 @@
+\documentclass{DIAG_PMS}
+
+\usepackage{array}
+\usepackage{colortbl}
+\usepackage{xcolor}
+\usepackage{ragged2e}
+
+\definecolor{headbg}{HTML}{1F3864}
+\definecolor{secbg}{HTML}{DCE6F4}
+\definecolor{okbg}{HTML}{E8F2DC}
+\definecolor{nokbg}{HTML}{FBE2E2}
+\definecolor{nabg}{HTML}{FFF4CC}
+\definecolor{gridcol}{HTML}{B8B8B8}
+
+\newcolumntype{L}[1]{>{\RaggedRight\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%	Arquivo criado pelo Colegiado do
+%   curso de Eng. Elétrica utilizando
+%   como base a classe AbnTeX2.
+%   Autores: André Tahim e Cristiane Paim
+%	Universidade Federal da Bahia
+%	Escola Politécnica
+%   Deptº de Eng. Elétrica e de Computação
+%	07/01/2021
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ---
+% Informações de dados para CAPA e FOLHA DE ROSTO
+% -------------------------------------------------------------------------------
+\titulo{<<nomeUc>>}
+\autor{Responsável Técnico: <<nomeRt>>}
+%\orientador{Orientador(a): Prof. Dr. X}
+%\coorientador{Coorientador(a): Prof. Dr. Y} % Comente se nao existir.
+\local{Salvador-Ba -- Brasil}
+\data{<<data>>}
+\tipotrabalho{Relatório técnico}
+% Nâo modifique o texto do preâmbulo!
+\preambulo{Relatório técnico elaborado em conformidade com as diretrizes do Programa de Eficiência Energética da ANEEL, com o objetivo de apresentar o diagnóstico energético da unidade consumidora <<nomeUc>>, identificar oportunidades de economia, propor medidas de melhoria da eficiência energética e avaliar sua viabilidade técnico-econômica.}
+
+
+%----------------
+% Examinadores
+%----------------
+% Coloque aqui o nome dos examinadores
+\newcommand{\bancaI}{Responsável Técnico}
+\newcommand{\bancaII}{Vistoriador}
+%\newcommand{\bancaIII}{Prof. Dr. Z}
+%\newcommand{\bancaIV}{Prof. Dr. H}
+
+
+%-------------------
+% Comandos Facilitadores
+%-------------------
+\input{./Auxiliares/cabecalho.tex}
+
+\begin{document}
+	
+% Seleciona o idioma do documento (conforme pacotes do babel)
+%\selectlanguage{english}
+\selectlanguage{brazil}
+
+% Retira espaço extra obsoleto entre as frases.
+\frenchspacing 
+
+% ----------------------------------------------------------
+% ELEMENTOS PRÉ-TEXTUAIS
+% ----------------------------------------------------------
+% \pretextual
+
+% ---
+% Capa
+% ---
+\pagenumbering{Alph}
+\imprimircapa
+\pagenumbering{arabic}
+% ---
+
+% Folha de rosto
+% (o * indica que haverá a ficha bibliográfica)
+% ---
+%\imprimirfolhaderosto
+% ---
+%\cleardoublepage
+
+\input{folhaDeAprovacao.tex}
+
+% ---
+% inserir lista de ilustrações
+% ---
+\pdfbookmark[0]{\listfigurename}{lof}
+\listoffigures*
+\cleardoublepage
+% ---
+
+% ---
+% inserir lista de tabelas
+% ---
+\pdfbookmark[0]{\listtablename}{lot}
+\listoftables*
+\cleardoublepage
+% ---
+
+% ---
+% inserir lista de abreviaturas e siglas
+% ---
+\input{./Auxiliares/listaAcronimos.tex}
+% ---
+
+% ---
+% inserir lista de símbolos
+% ---
+%\input{./Auxiliares/listaSimbolos.tex}
+% ---
+
+% ---
+% inserir o sumario
+% ---
+\pdfbookmark[0]{\contentsname}{toc}
+\tableofcontents*
+\cleardoublepage
+% ---
+
+% ----------------------------------------------------------
+% ELEMENTOS TEXTUAIS
+% ----------------------------------------------------------
+\textual
+	
+%%%%%%%%%%%%%%
+%	CAPÍTULOS
+%%%%%%%%%%%%%%
+\input{./capitulo1.tex}
+\input{./capitulo2.tex}
+\input{./capitulo3.tex}
+\input{./capitulo4.tex}
+\input{./capitulo5.tex}
+\input{./capitulo6.tex}
+\input{./capitulo7.tex}
+\input{./capitulo8.tex}
+\input{./capitulo9.tex}
+\input{./capitulo10.tex}
+\input{./capitulo11.tex}
+\input{./capitulo12.tex}
+% ----------------------------------------------------------
+% ELEMENTOS PÓS-TEXTUAIS
+% ----------------------------------------------------------
+\postextual
+
+\bibliographystyle{./Auxiliares/abntex2-alf}
+\bibliography{./Auxiliares/ref-TCC}
+
+
+\end{document}

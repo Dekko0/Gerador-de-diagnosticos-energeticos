@@ -1,0 +1,109 @@
+
+%% Criação de unidades usuais em Eng. Elétrica
+
+% Resistência
+\def\mOhm{\ensuremath{\,\mathrm{m\Omega}}}
+\def\Ohm{\ensuremath{\,\mathrm{\Omega}}}
+\def\kOhm{\ensuremath{\,\mathrm{k\Omega}}}	
+
+% Capacitância
+\def\Farad{\ensuremath{\,\mathrm{F}}}
+\def\mF{\ensuremath{\,\mathrm{mF}}}
+\def\uF{\ensuremath{\,\mu\mathrm{F}}}	
+\def\nF{\ensuremath{\,\mathrm{nF}}}
+
+% Indutância
+\def\Henry{\ensuremath{\,\mathrm{H}}}
+\def\mH{\ensuremath{\,\mathrm{mH}}}
+\def\uH{\ensuremath{\,\mu\mathrm{H}}}
+\def\nH{\ensuremath{\,\mathrm{nH}}}
+
+% Tensão
+\def\Volt{\ensuremath{\,\mathrm{V}}}
+\def\mV{\ensuremath{\,\mu\mathrm{mV}}}
+\def\kV{\ensuremath{\,\mathrm{kV}}}
+
+% Potência
+\def\Watt{\ensuremath{\,\mathrm{W}}}
+\def\mW{\ensuremath{\,\mu\mathrm{mW}}}
+\def\kW{\ensuremath{\,\mathrm{kW}}}
+
+% Corrente
+\def\Amp{\ensuremath{\,\mathrm{A}}}
+\def\mA{\ensuremath{\,\mu\mathrm{mA}}}
+\def\kA{\ensuremath{\,\mathrm{kA}}}
+\def\nA{\ensuremath{\,\mu\mathrm{nA}}}
+
+% Números Reais, Complexos, Naturais, Inteiros e rank
+\def\R{\ensuremath{\mathbb{R}}}
+\def\C{\ensuremath{\mathbb{C}}}
+\def\N{\ensuremath{\mathbb{N}}}
+\def\Z{\ensuremath{\mathbb{Z}}}
+\def\rank{\ensuremath{\mathrm{rank}\,}}
+
+% Comando para inserir unidades que não estão descritas acima.
+\newcommand{\unid}[1]{\ensuremath{\, \mathrm{#1}}}
+
+% Diferencial
+\newcommand{\dif}{\mathrm{d}} 
+
+% num. de Euler
+\providecommand*{\eu}%
+{\ensuremath{\mathrm{e}}}
+
+% número imaginário
+\providecommand*{\iu}
+{\ensuremath{\mathrm{j}}}
+
+%Para imprimir o seno corretamente
+\providecommand*{\seno}%
+{\ensuremath{\mathrm{sen}}}
+
+%%% Novos comandos %%%
+% Subscrito 
+\providecommand*{\sub}[1]{\ensuremath{_\mathrm{#1}}} 	%Permite colocar subescrito
+
+% Sobrescrito
+\providecommand*{\supe}[1]{\ensuremath{^\mathrm{#1}}}
+
+% Vetor
+\providecommand*{\vetor}[1]{\ensuremath{\boldsymbol{#1}}}
+
+% Norma e descrição de vetores
+\newcommand{\norma}[1]{\left|\left|#1\right|\right|}
+\newcommand{\lvetor}[2]{(#1_1,#1_2,\ldots,#1_{#2})}
+\newcommand{\gvetor}[2][x]{(#1_1,#1_2,\ldots,#1_{#2})}
+
+% Definição de equivalência
+\newcommand{\defeq}{\mathrel{\mathop:}=}
+
+%Figuras e Tabelas
+\addto\captionsbrazil{
+	\renewcommand{\figurename}{Fig.}
+	\renewcommand{\tablename}{Tab.}
+}
+
+%Graus e grau
+\newcommand{\graus}[1]{\ensuremath{\,^{\circ} \mathrm{#1}}}
+\newcommand{\grau}{\ensuremath{^{\circ}}}
+
+% latexdiff
+%DIF PREAMBLE EXTENSION ADDED BY LATEXDIFF
+%DIF UNDERLINE PREAMBLE %DIF PREAMBLE
+\RequirePackage[normalem]{ulem} %DIF PREAMBLE
+\RequirePackage{color}\definecolor{RED}{rgb}{1,0,0}\definecolor{BLUE}{rgb}{0,0,1} %DIF PREAMBLE
+\providecommand{\DIFadd}[1]{{\protect\color{blue}\uwave{#1}}} %DIF PREAMBLE
+\providecommand{\DIFdel}[1]{{\protect\color{red}\sout{#1}}}                      %DIF PREAMBLE
+%DIF SAFE PREAMBLE %DIF PREAMBLE
+\providecommand{\DIFaddbegin}{} %DIF PREAMBLE
+\providecommand{\DIFaddend}{} %DIF PREAMBLE
+\providecommand{\DIFdelbegin}{} %DIF PREAMBLE
+\providecommand{\DIFdelend}{} %DIF PREAMBLE
+%DIF FLOATSAFE PREAMBLE %DIF PREAMBLE
+\providecommand{\DIFaddFL}[1]{\DIFadd{#1}} %DIF PREAMBLE
+\providecommand{\DIFdelFL}[1]{\DIFdel{#1}} %DIF PREAMBLE
+\providecommand{\DIFaddbeginFL}{} %DIF PREAMBLE
+\providecommand{\DIFaddendFL}{} %DIF PREAMBLE
+\providecommand{\DIFdelbeginFL}{} %DIF PREAMBLE
+\providecommand{\DIFdelendFL}{} %DIF PREAMBLE
+%DIF END PREAMBLE EXTENSION ADDED BY LATEXDIFF

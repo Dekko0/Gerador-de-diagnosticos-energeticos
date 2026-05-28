@@ -1,0 +1,9 @@
+# --- Runtime ---
+openpyxl>=3.1          # leitura de .xlsx (data_only para valores calculados)
+matplotlib>=3.10       # gráficos e placeholders de imagens (PNG headless)
+numpy>=1.26            # cálculo da geometria da pizza 3D / barras
+streamlit>=1.40        # interface gráfica (upload -> download)
+pypdf>=4.0             # extração de texto do PDF para verificação anti-<<>>
+
+# --- Desenvolvimento / testes ---
+pytest>=8.0
