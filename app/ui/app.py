@@ -67,23 +67,21 @@ def _build_config(cfg_dict: dict) -> Config:
 def _run_pipeline_with_progress(
     xlsx_path: Path,
     out_pdf: Path,
-    out_docx: Path | None,
     cfg: Config,
-    include_docx: bool,
     handler: _ListHandler,
 ):
-    """Executa o pipeline mostrando barra + 4 steps inline; coleta logs."""
+    """Executa o pipeline mostrando barra + steps inline; coleta logs."""
     placeholder = st.empty()
 
     def _render(active_idx: int) -> None:
-        steps = components.steps_for(active_idx, include_docx=include_docx)
+        steps = components.steps_for(active_idx)
         with placeholder.container():
             components.render_progress(steps)
 
     _render(0)  # estado inicial: "Lendo planilha" ativo
 
     def _on_progress(_label: str, fraction: float) -> None:
-        idx = components.fraction_to_step_index(fraction, include_docx=include_docx)
+        idx = components.fraction_to_step_index(fraction)
         _render(idx)
 
     root = logging.getLogger()
@@ -94,9 +92,7 @@ def _run_pipeline_with_progress(
         result = run(
             xlsx_path,
             out_pdf=out_pdf,
-            out_docx=out_docx,
             config=cfg,
-            skip_docx=not include_docx,
             progress_callback=_on_progress,
         )
     finally:
@@ -142,15 +138,12 @@ def main() -> None:
     xlsx_path.write_bytes(uploaded_file.getbuffer())
     stem = Path(uploaded_file.name).stem
     cfg = _build_config(cfg_dict)
-    include_docx = bool(cfg_dict["include_docx"])
 
     try:
         result = _run_pipeline_with_progress(
             xlsx_path=xlsx_path,
             out_pdf=tmpdir / f"{stem}.pdf",
-            out_docx=tmpdir / f"{stem}.docx" if include_docx else None,
             cfg=cfg,
-            include_docx=include_docx,
             handler=handler,
         )
     except CompilationError as exc:

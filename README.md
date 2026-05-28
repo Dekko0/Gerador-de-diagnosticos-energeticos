@@ -2,12 +2,9 @@
 
 Aplicação que recebe uma planilha `.xlsx` de diagnóstico energético, mescla os
 dados em um template LaTeX (classe `DIAG_PMS.cls` / abnTeX2), gera dois
-gráficos e compila um **PDF visualmente idêntico ao template original**. Um
-**DOCX best-effort** é produzido em seguida se LibreOffice estiver instalado.
+gráficos e compila um **PDF visualmente idêntico ao template original**.
 
-> **PDF é o formato oficial.** O DOCX é uma cópia adaptada com **perda parcial
-> de fidelidade** (espaçamentos e tabelas podem reorganizar); use o PDF como
-> referência.
+> **PDF é o formato oficial e único entregável.**
 
 ---
 
@@ -25,14 +22,13 @@ gráficos e compila um **PDF visualmente idêntico ao template original**. Um
 .\run_ui.ps1
 ```
 
-Na interface: **envie o `.xlsx` → clique em "Gerar Relatório" → baixe o PDF
-(e o DOCX, se disponível)**.
+Na interface: **envie o `.xlsx` → clique em "Gerar Relatório" → baixe o PDF**.
 
 ### Linha de comando
 
 ```powershell
 .\.venv\Scripts\python.exe -m app "RAD CMEI Olga Benário.xlsx"
-# opções: --docx PATH | --skip-docx | --keep-workdir | --first-wins
+# opções: --keep-workdir | --first-wins
 ```
 
 ### Testes
@@ -41,20 +37,9 @@ Na interface: **envie o `.xlsx` → clique em "Gerar Relatório" → baixe o PDF
 .\.venv\Scripts\python.exe -m pytest
 ```
 
-### DOCX opcional — instalando o LibreOffice
-
-A conversão PDF → DOCX usa `soffice --headless --convert-to docx`.
-
-- **Windows:** baixar de https://www.libreoffice.org/download/ ou
-  `winget install TheDocumentFoundation.LibreOffice`.
-- **Linux:** `sudo apt install libreoffice`.
-
-Sem o LibreOffice o pipeline **não falha**: simplesmente pula o DOCX, gera o
-PDF normalmente e mostra um aviso.
-
 ---
 
-## 2. Por que PDF como deliverable primário
+## 2. Por que PDF como deliverable
 
 O template usa `DIAG_PMS.cls` (baseada em **abnTeX2**), com comandos
 customizados (`\imprimircapa`, listas de figuras/tabelas, sumário próprio,
@@ -64,13 +49,6 @@ cores e tabelas formatadas com `\rowcolor`/`\cellcolor`). Esse design existe
 - **PDF (Tectonic / XeLaTeX):** mantém **100% da fidelidade** — capa, cores
   de tabela (verde/vermelho/amarelo no checklist NR), listas de figuras e
   tabelas, sumário ABNT, numeração de página, fontes Latin Modern.
-- **DOCX (LibreOffice a partir do PDF):** conversão automática; a estrutura e
-  o conteúdo são preservados, mas espaçamentos e algumas tabelas podem
-  reorganizar. É útil para edição final, mas o PDF é o oficial.
-
-Tentativas anteriores via pandoc (LaTeX direto → DOCX) perdiam cor de
-células, ligavam mal tabulares aninhadas e deixavam acrônimos sem expansão —
-fidelidade insuficiente para um relatório técnico municipal.
 
 ---
 
@@ -84,10 +62,6 @@ fidelidade insuficiente para um relatório técnico municipal.
           + conflitos + dados        substitui <<chaves>>, normaliza Unicode,
             dos gráficos             gera placeholders) ─▶ latex_compiler
                                        (Tectonic + verifica fonte) ─▶ PDF
-                                                                       │
-                                                                       ▼
-                                                          (opcional) pdf_to_docx
-                                                          (LibreOffice headless) ─▶ DOCX
 ```
 
 1. **Lê** a aba `Tabela de Transferência` (col **D** = chave `<<...>>`,
@@ -103,7 +77,6 @@ fidelidade insuficiente para um relatório técnico municipal.
    `<<`/`>>` como guillemets `«`/`»`).
 5. **Compila** via Tectonic (`tectonic -X compile -Z continue-on-errors …`)
    produzindo o PDF.
-6. *(opcional)* **Converte** o PDF para DOCX via LibreOffice headless.
 
 ### Estrutura
 
@@ -115,14 +88,14 @@ app/
   charts.py          # Gráfico 1 (pizza 3D) e Gráfico 2 (barras) + placeholders
   latex_filler.py    # cópia, substituição, normalização Unicode, placeholders
   latex_compiler.py  # Tectonic + verificação no PDF
-  pdf_to_docx.py     # LibreOffice headless (graceful skip)
+  tectonic_setup.py  # baixa o Tectonic estático no Linux (Streamlit Cloud)
   pipeline.py        # orquestra tudo
   ui/
     app.py           # entry-point Streamlit (run_ui.* aponta aqui)
     components.py    # header, upload, progresso, downloads…
     styles.py        # CSS + CDN Google Material Icons
   __main__.py        # CLI (python -m app)
-bin/tectonic.exe     # XeLaTeX portátil (19 MB, baixa CTAN sob demanda)
+bin/tectonic.exe     # XeLaTeX portátil no Windows (no Linux é baixado em runtime)
 templates/latex/     # template empacotado (cópia; não é mutado em execução)
 tests/               # pytest (usa RAD CMEI Olga Benário.xlsx como fixture)
 ```
@@ -205,12 +178,6 @@ de `<<...>>` e aborta o build se encontrar. Como `substitute()` sempre
 substitui (por valor ou por placeholder), esta verificação serve como
 assertion paranoico; se um dia falhar, indica bug do filler.
 
-### DOCX (best-effort) via LibreOffice
-Não exige instalação no sistema para o pipeline funcionar — se ausente, o
-DOCX é pulado com aviso. Quando disponível, `soffice --headless --convert-to
-docx` produz um Word usável a partir do PDF. **Fidelidade parcial**:
-espaçamentos podem variar e algumas tabelas podem aparecer reorganizadas.
-
 ---
 
 ## 6. Critérios de aceite (Definition of Done)
@@ -223,5 +190,4 @@ espaçamentos podem variar e algumas tabelas podem aparecer reorganizadas.
 | 4 | `Figuras/Grafico 1.png` (pizza 3D, sem total) e `Grafico 2.png` (barras, sem "Sem Histórico") embutidos | ✅ |
 | 5 | Datas `dd/mm/aaaa` e números pt-BR | ✅ |
 | 6 | Conflitos e chaves sem valor nos logs/avisos | ✅ |
-| 7 | DOCX *(opcional)* baixável quando LibreOffice estiver disponível, com aviso de fidelidade parcial | ✅ |
-| 8 | `pytest` passa; README documenta a estratégia | ✅ (38 testes) |
+| 7 | `pytest` passa; README documenta a estratégia | ✅ (38 testes) |

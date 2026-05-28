@@ -15,9 +15,7 @@ def _tectonic_available() -> bool:
                     reason="Tectonic binary não encontrado em bin/")
 def test_end_to_end_dod(tmp_path, fixture_xlsx):
     out_pdf = tmp_path / "relatorio.pdf"
-    result = run(fixture_xlsx, out_pdf=out_pdf,
-                 out_docx=tmp_path / "relatorio.docx",
-                 config=Config(), skip_docx=True)  # DOCX opcional, pulado aqui
+    result = run(fixture_xlsx, out_pdf=out_pdf, config=Config())
 
     # 1) PDF gerado e baixável
     assert out_pdf.exists() and out_pdf.stat().st_size > 0
@@ -49,7 +47,7 @@ def test_original_template_not_mutated(fixture_xlsx, tmp_path):
     config = Config()
     cap8 = config.template_dir / "capitulo8.tex"
     before = cap8.read_text(encoding="utf-8")
-    run(fixture_xlsx, out_pdf=tmp_path / "r.pdf", config=config, skip_docx=True)
+    run(fixture_xlsx, out_pdf=tmp_path / "r.pdf", config=config)
     after = cap8.read_text(encoding="utf-8")
     assert before == after
     assert "<<" in after  # template-fonte mantém as chaves

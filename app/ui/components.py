@@ -45,7 +45,7 @@ def render_header() -> None:
             <h1>Gerador de Relatórios — Diagnóstico de Eficiência</h1>
         </div>
         <p class="app-subtitle">
-            Excel → LaTeX → PDF (oficial) + Word (cópia opcional) · v{html.escape(__version__)}
+            Excel → LaTeX → PDF · v{html.escape(__version__)}
         </p>
         """,
         unsafe_allow_html=True,
@@ -93,15 +93,6 @@ def render_sidebar() -> dict:
         )
 
         st.divider()
-        st.markdown(
-            f'{icon("file_present", color="info")} **Entrega**',
-            unsafe_allow_html=True,
-        )
-        cfg["include_docx"] = st.checkbox(
-            "Incluir Word na entrega (conversão aproximada)",
-            value=True,
-            help="Requer LibreOffice instalado. Se ausente, é pulado com aviso.",
-        )
         cfg["verbose_logs"] = st.checkbox("Exibir registros detalhados")
     return cfg
 
@@ -153,7 +144,6 @@ STEP_LABELS: tuple[str, ...] = (
     "Lendo planilha",
     "Gerando gráficos",
     "Compilando LaTeX",
-    "Convertendo Word",
 )
 
 _STEP_ICONS = {
@@ -185,16 +175,14 @@ def render_progress(steps: list[tuple[str, str]]) -> None:
             )
 
 
-def fraction_to_step_index(fraction: float, *, include_docx: bool) -> int:
-    """Mapeia uma fração [0,1] do pipeline ao índice do step ativo (0..3).
+def fraction_to_step_index(fraction: float) -> int:
+    """Mapeia uma fração [0,1] do pipeline ao índice do step ativo (0..2).
 
-    Os limiares casam com as fracões emitidas por ``pipeline.run`` (0.05 →
-    leitura, 0.25 → gráficos, 0.40/0.55 → compilação, 0.90 → DOCX, 1.0 → done).
+    Os limiares casam com as frações emitidas por ``pipeline.run`` (0.05 →
+    leitura, 0.25 → gráficos, 0.40/0.55 → compilação, 1.0 → done).
     """
     if fraction >= 1.0:
-        return 4   # tudo concluído
-    if fraction >= 0.85 and include_docx:
-        return 3
+        return 3   # tudo concluído
     if fraction >= 0.40:
         return 2
     if fraction >= 0.20:
@@ -202,11 +190,9 @@ def fraction_to_step_index(fraction: float, *, include_docx: bool) -> int:
     return 0
 
 
-def steps_for(active_idx: int, *, include_docx: bool) -> list[tuple[str, str]]:
+def steps_for(active_idx: int) -> list[tuple[str, str]]:
     """Constrói a lista de steps a partir do índice ativo."""
     labels = list(STEP_LABELS)
-    if not include_docx:
-        labels = labels[:3]
     result: list[tuple[str, str]] = []
     for i, label in enumerate(labels):
         if i < active_idx:
@@ -260,57 +246,29 @@ def render_warnings(
 # Cards de download
 # --------------------------------------------------------------------------- #
 def render_download_cards(result: PipelineResult, filename_base: str) -> None:
-    """Dois cards lado a lado: PDF (oficial, verde) e DOCX (opcional, azul)."""
+    """Card de download do PDF (formato oficial)."""
     st.markdown(
         f'### {icon("download_done", color="success")}Relatório gerado com sucesso!',
         unsafe_allow_html=True,
     )
 
-    col1, col2 = st.columns(2)
     pdf_path: Path = result.pdf_path
     pdf_size_mb = pdf_path.stat().st_size / (1024 * 1024)
 
-    with col1:
-        st.markdown(
-            '<div class="download-card official">'
-            f'{icon("check_circle", color="success")}'
-            ' <strong>PDF — Formato Oficial</strong><br>'
-            '<small style="color:#888">100% fiel ao template LaTeX · '
-            f"{html.escape(pdf_path.name)} · {pdf_size_mb:.2f} MB</small>"
-            "</div>",
-            unsafe_allow_html=True,
-        )
-        st.download_button(
-            label="📥  Baixar PDF",
-            data=io.BytesIO(pdf_path.read_bytes()),
-            file_name=f"{filename_base}.pdf",
-            mime="application/pdf",
-            use_container_width=True,
-            key="download_pdf",
-        )
-
-    with col2:
-        if result.docx_path is not None:
-            docx_size_mb = result.docx_path.stat().st_size / (1024 * 1024)
-            st.markdown(
-                '<div class="download-card optional">'
-                f'{icon("info", color="info")}'
-                ' <strong>Word — Cópia Adaptada</strong><br>'
-                '<small style="color:#888">Conversão aproximada via LibreOffice · '
-                "fidelidade parcial · "
-                f"{html.escape(result.docx_path.name)} · {docx_size_mb:.2f} MB</small>"
-                "</div>",
-                unsafe_allow_html=True,
-            )
-            st.download_button(
-                label="📥  Baixar Word",
-                data=io.BytesIO(result.docx_path.read_bytes()),
-                file_name=f"{filename_base}.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True,
-                key="download_docx",
-            )
-        elif result.docx_skipped_reason:
-            st.info(f"Word não gerado: {result.docx_skipped_reason}")
-        else:
-            st.info("Word não solicitado (ative na barra lateral para incluir).")
+    st.markdown(
+        '<div class="download-card official">'
+        f'{icon("check_circle", color="success")}'
+        ' <strong>PDF — Formato Oficial</strong><br>'
+        '<small style="color:#888">100% fiel ao template LaTeX · '
+        f"{html.escape(pdf_path.name)} · {pdf_size_mb:.2f} MB</small>"
+        "</div>",
+        unsafe_allow_html=True,
+    )
+    st.download_button(
+        label="📥  Baixar PDF",
+        data=io.BytesIO(pdf_path.read_bytes()),
+        file_name=f"{filename_base}.pdf",
+        mime="application/pdf",
+        use_container_width=True,
+        key="download_pdf",
+    )
