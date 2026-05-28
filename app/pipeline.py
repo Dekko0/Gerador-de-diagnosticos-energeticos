@@ -1,9 +1,7 @@
-"""Orquestração do pipeline: planilha ``.xlsx`` -> template -> **PDF** (+ DOCX).
+"""Orquestração do pipeline: planilha ``.xlsx`` -> template -> **PDF**.
 
-PDF é o **deliverable primário** (100% fiel ao template LaTeX/abnTeX2),
-compilado por Tectonic. DOCX é o **deliverable secundário** (cópia adaptada
-com fidelidade parcial), convertido a partir do PDF via LibreOffice headless
-quando este está instalado; caso contrário, pulado com aviso claro.
+PDF é o deliverable final (100% fiel ao template LaTeX/abnTeX2), compilado por
+Tectonic.
 """
 
 from __future__ import annotations
@@ -14,7 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable
 
-from . import charts, excel_loader, latex_compiler, latex_filler, pdf_to_docx
+from . import charts, excel_loader, latex_compiler, latex_filler
 from .config import Config
 
 #: Callback opcional ``(stage_label, fraction_0_to_1)`` chamado em cada fase
@@ -27,8 +25,6 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PipelineResult:
     pdf_path: Path
-    docx_path: Path | None = None
-    docx_skipped_reason: str | None = None
     warnings: list[str] = field(default_factory=list)
     info: list[str] = field(default_factory=list)
     summary: dict[str, object] = field(default_factory=dict)
@@ -46,17 +42,13 @@ def setup_logging(level: int = logging.INFO) -> None:
 def run(
     xlsx_path: str | Path,
     out_pdf: str | Path | None = None,
-    out_docx: str | Path | None = None,
     config: Config | None = None,
     keep_workdir: bool = False,
-    skip_docx: bool = False,
     progress_callback: ProgressCallback | None = None,
 ) -> PipelineResult:
     """Executa o pipeline completo.
 
     * ``out_pdf`` — caminho do PDF final. Default: ``output/<stem>.pdf``.
-    * ``out_docx`` — caminho do DOCX. Default: ``output/<stem>.docx``.
-      Pulado se LibreOffice não estiver instalado ou ``skip_docx=True``.
     * ``progress_callback`` — opcional. Recebe ``(label, fraction)`` em cada
       etapa. ``fraction`` está em ``[0, 1]``.
     """
@@ -64,7 +56,6 @@ def run(
     xlsx_path = Path(xlsx_path)
     stem = xlsx_path.stem
     out_pdf = Path(out_pdf) if out_pdf else Path("output") / f"{stem}.pdf"
-    out_docx = (Path(out_docx) if out_docx else Path("output") / f"{stem}.docx") if not skip_docx else None
 
     def _progress(label: str, fraction: float) -> None:
         if progress_callback is not None:
@@ -125,23 +116,9 @@ def run(
         comp = latex_compiler.compile_and_verify(workdir, out_pdf, config)
         info.append(f"PDF: {comp.page_count} páginas, sem '<<>>' (verificado).")
 
-        # 6) (opcional) PDF -> DOCX via LibreOffice -------------------------
-        docx_result_path: Path | None = None
-        docx_skipped: str | None = None
-        if not skip_docx and out_docx is not None:
-            _progress("Convertendo PDF para DOCX", 0.90)
-            docx_result = pdf_to_docx.convert_pdf_to_docx(comp.pdf_path, out_docx, config)
-            if docx_result.ok:
-                docx_result_path = docx_result.docx_path
-                info.append(f"DOCX (best-effort): {docx_result.docx_path.name}.")
-            else:
-                docx_skipped = docx_result.skipped_reason
-                warnings.append(docx_skipped or "DOCX não gerado.")
-
         summary = {
             "xlsx": str(xlsx_path),
             "pdf": str(comp.pdf_path),
-            "docx": str(docx_result_path) if docx_result_path else None,
             "pages": comp.page_count,
             "keys_total": len(load.resolved),
             "keys_substituted": len(fill.substituted_keys),
@@ -157,8 +134,6 @@ def run(
         _progress("Concluído", 1.0)
         return PipelineResult(
             pdf_path=comp.pdf_path,
-            docx_path=docx_result_path,
-            docx_skipped_reason=docx_skipped,
             warnings=warnings, info=info, summary=summary,
         )
     finally:

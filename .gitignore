@@ -3,12 +3,11 @@
 # ======================================================================
 
 # Saídas geradas
-output/*.docx
 output/*.pdf
 
 # Tectonic — binário portátil não versionado (~50 MB). Baixe em
 # github.com/tectonic-typesetting/tectonic/releases e coloque em bin/.
-# No Streamlit Cloud, o Tectonic é instalado via packages.txt (apt).
+# No Streamlit Cloud, o Tectonic é baixado em runtime (app/tectonic_setup.py).
 bin/*
 !bin/.gitkeep
 

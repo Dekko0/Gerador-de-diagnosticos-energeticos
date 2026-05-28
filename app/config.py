@@ -154,20 +154,6 @@ class Config:
     )
 
     # ------------------------------------------------------------------ #
-    # Conversão PDF -> DOCX (deliverable SECUNDÁRIO; opcional)
-    # ------------------------------------------------------------------ #
-    #: Onde procurar o LibreOffice. Se ``None`` em todos, o DOCX é pulado.
-    libreoffice_candidates: list[Path] = field(
-        default_factory=lambda: [
-            Path(r"C:\Program Files\LibreOffice\program\soffice.exe"),
-            Path(r"C:\Program Files (x86)\LibreOffice\program\soffice.exe"),
-            Path(r"C:\Users\Dekko\AppData\Local\Programs\LibreOffice\program\soffice.exe"),
-            Path("/usr/bin/libreoffice"),
-            Path("/usr/local/bin/libreoffice"),
-        ]
-    )
-
-    # ------------------------------------------------------------------ #
     # Normalização de Unicode para xelatex + T1
     # ------------------------------------------------------------------ #
     #: O template usa ``[T1]{fontenc}`` + lmodern; com xelatex, caracteres
@@ -189,15 +175,3 @@ class Config:
     @property
     def figures_dirname(self) -> str:
         return self.figures_subdir
-
-    def find_libreoffice(self) -> Path | None:
-        """Retorna o primeiro LibreOffice existente entre os candidatos, ou None."""
-        import shutil
-        for p in self.libreoffice_candidates:
-            if p.exists():
-                return p
-        for name in ("soffice", "libreoffice"):
-            found = shutil.which(name)
-            if found:
-                return Path(found)
-        return None
