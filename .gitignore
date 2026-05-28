@@ -13,8 +13,11 @@ bin/*
 !bin/.gitkeep
 
 # Temporários do projeto
+# (mas NUNCA ignorar arquivos dunder de pacote como __init__.py / __main__.py)
 _*.py
+!__*.py
 _*.png
+!__*.png
 *.tmp
 
 # Template original (fonte; o app usa templates/latex/)
