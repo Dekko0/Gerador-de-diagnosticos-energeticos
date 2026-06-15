@@ -10,8 +10,8 @@ from app.config import Config
 from app import excel_loader
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-#: Exemplo legado, preenchido com dados reais (Gráficos 1 e 2 apenas).
-FIXTURE_XLSX = PROJECT_ROOT / "RAD CMEI Olga Benário.xlsx"
+#: Exemplo PREENCHIDO no formato novo (5 gráficos com dados reais). Uso local.
+FIXTURE_XLSX = PROJECT_ROOT / "RD_CMEI_TESTE.xlsx"
 #: Modelo novo (em branco) com os 5 marcadores de gráfico e as chaves novas.
 FIXTURE_MODEL = PROJECT_ROOT / "RD_MODELO.xlsx"
 
