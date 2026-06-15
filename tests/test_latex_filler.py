@@ -45,6 +45,35 @@ def test_normalize_unicode_replaces_dashes(tmp_path):
     assert "---" in out and "--" in out and r"\ldots{}" in out
 
 
+def test_normalize_unicode_superscripts_and_symbols(tmp_path):
+    """Sobrescritos/símbolos (m², CO₂, µ, °, nº, ½, ×) viram comandos LaTeX."""
+    _write_tex(tmp_path, "capitulo1.tex",
+               "Area de 50 m² e CO₂; µg a 25°C; nº 920; "
+               "½ kWh; 3 × 4; 1ª etapa")
+    latex_filler.normalize_unicode_for_latex(tmp_path, Config())
+    out = (tmp_path / "capitulo1.tex").read_text(encoding="utf-8")
+    # nenhum caractere problemático sobra
+    for ch in ("²", "₂", "µ", "°", "º", "½", "×", "ª"):
+        assert ch not in out
+    assert r"m\textsuperscript{2}" in out
+    assert r"\textsubscript{2}" in out
+    assert r"\textmu{}" in out
+    assert r"\textdegree{}" in out
+    assert r"n\textordmasculine{}" in out
+    assert r"\textonehalf{}" in out
+    assert r"\texttimes{}" in out
+
+
+def test_normalize_also_covers_bib(tmp_path):
+    """A normalização cobre .bib (bibliografia), não só .tex."""
+    (tmp_path / "ref.bib").write_text(
+        "@misc{x, title={Resolucao nº 920 e 10 m²}}", encoding="utf-8")
+    latex_filler.normalize_unicode_for_latex(tmp_path, Config())
+    out = (tmp_path / "ref.bib").read_text(encoding="utf-8")
+    assert "º" not in out and "²" not in out
+    assert r"\textordmasculine{}" in out and r"\textsuperscript{2}" in out
+
+
 def test_ensure_referenced_images_creates_placeholders(tmp_path):
     _write_tex(tmp_path, "capitulo1.tex",
                r"\includegraphics{Figuras/Foto}\includegraphics{Figuras/ssa3.png}")
@@ -71,15 +100,16 @@ def test_unsubstituted_tokens_detects_leftover(tmp_path):
     assert leftover == ["<<chaveOrfa>>"]
 
 
-def test_full_fill_no_placeholder_no_brace_warnings(load_result):
-    """Após fill, nenhum <<...>> sobra nos .tex e capítulos têm chaves balanceadas."""
+def test_full_fill_no_leftover_no_brace_warnings(model_load_result):
+    """Após o fill com o modelo novo, nenhum <<...>> sobra nos .tex e os
+    capítulos têm chaves balanceadas (chaves ausentes viram placeholder, não
+    deixam token)."""
     config = Config()
     workdir = latex_filler.prepare_workdir(config)
     try:
-        report = latex_filler.fill_template(load_result.resolved, config, workdir=workdir)
+        report = latex_filler.fill_template(model_load_result.resolved, config, workdir=workdir)
         assert latex_filler.unsubstituted_tokens(workdir) == []
         assert report.brace_warnings == []
-        assert report.missing_in_planilha == []  # todas as 205 chaves têm valor
     finally:
         import shutil
         shutil.rmtree(workdir.parent, ignore_errors=True)

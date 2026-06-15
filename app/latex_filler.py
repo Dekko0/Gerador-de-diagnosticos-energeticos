@@ -71,6 +71,13 @@ def iter_tex_files(workdir: Path) -> list[Path]:
     return sorted(workdir.rglob("*.tex"))
 
 
+def iter_normalizable_files(workdir: Path) -> list[Path]:
+    """Arquivos cujo texto é renderizado e precisa de normalização Unicode:
+    ``.tex`` (corpo) e ``.bib`` (bibliografia — ex.: 'Resolução Normativa nº 920',
+    que sem isto renderiza com glifo errado)."""
+    return sorted(workdir.rglob("*.tex")) + sorted(workdir.rglob("*.bib"))
+
+
 def scan_tex_keys(workdir: Path) -> set[str]:
     keys: set[str] = set()
     for tex in iter_tex_files(workdir):
@@ -172,7 +179,7 @@ def normalize_unicode_for_latex(workdir: Path, config: Config) -> int:
         return 0
     table = str.maketrans(config.unicode_replacements)
     total = 0
-    for tex in iter_tex_files(workdir):
+    for tex in iter_normalizable_files(workdir):
         txt = _read_text(tex)
         new = txt.translate(table)
         if new != txt:

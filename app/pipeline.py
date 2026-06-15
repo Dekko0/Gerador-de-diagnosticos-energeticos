@@ -39,16 +39,38 @@ def setup_logging(level: int = logging.INFO) -> None:
     root.setLevel(level)
 
 
+def _write_uploaded_images(images: dict[str, bytes], figures_dir: Path) -> list[str]:
+    """Grava as fotos enviadas (filename -> bytes PNG) em ``figures_dir``.
+
+    Feito ANTES de ``ensure_referenced_images`` para que essas imagens sejam
+    usadas no lugar dos placeholders. Retorna os nomes efetivamente gravados.
+    """
+    figures_dir.mkdir(parents=True, exist_ok=True)
+    written: list[str] = []
+    for name, data in images.items():
+        if not data:
+            continue
+        (figures_dir / name).write_bytes(data)
+        written.append(name)
+    if written:
+        logger.info("Imagens de inspeção aplicadas (%d): %s", len(written), written)
+    return written
+
+
 def run(
     xlsx_path: str | Path,
     out_pdf: str | Path | None = None,
     config: Config | None = None,
     keep_workdir: bool = False,
+    images: dict[str, bytes] | None = None,
     progress_callback: ProgressCallback | None = None,
 ) -> PipelineResult:
     """Executa o pipeline completo.
 
     * ``out_pdf`` — caminho do PDF final. Default: ``output/<stem>.pdf``.
+    * ``images`` — opcional. Mapa ``nome_arquivo -> bytes PNG`` de fotos de
+      inspeção (ex.: ``"NR01ACFT.png"``) gravadas em ``Figuras/`` antes da
+      geração de placeholders.
     * ``progress_callback`` — opcional. Recebe ``(label, fraction)`` em cada
       etapa. ``fraction`` está em ``[0, 1]``.
     """
@@ -78,16 +100,25 @@ def run(
         info.append(f"Gráfico 1: fatias zero omitidas: {load.pie.dropped_zero}")
     if load.bar.dropped:
         info.append(f"Gráfico 2: {len(load.bar.dropped)} mês(es) descartado(s).")
+    info.append(
+        f"Gráficos gerados: 1 (pizza), 2 (consumo), 3 (Ponta/Fora Ponta: "
+        f"{len(load.stacked.months)} mês), 4 (demanda: {len(load.demand.months)} mês), "
+        f"5 (despesa: {len(load.expense.months)} mês)."
+    )
 
     # 2) Preparar cópia de trabalho do template ----------------------------
     _progress("Preparando template", 0.15)
     workdir = latex_filler.prepare_workdir(config)
     base_tmp = workdir.parent
     try:
-        # 3) Gerar gráficos -------------------------------------------------
+        # 3) Gerar gráficos + aplicar fotos de inspeção enviadas ------------
         _progress("Gerando gráficos", 0.25)
         figures_dir = workdir / config.figures_subdir
         charts.generate_charts(load, figures_dir, config)
+        if images:
+            applied = _write_uploaded_images(images, figures_dir)
+            if applied:
+                info.append(f"{len(applied)} foto(s) de inspeção aplicada(s): {applied}")
 
         # 4) Substituir chaves + normalizar Unicode + placeholders ----------
         _progress("Substituindo chaves no LaTeX", 0.40)
@@ -128,6 +159,9 @@ def run(
             "placeholders_created": fill.placeholders_created,
             "pie_slices": dict(zip(load.pie.labels, load.pie.values)),
             "bar_months": load.bar.months,
+            "stacked_months": load.stacked.months,
+            "demand_months": load.demand.months,
+            "expense_months": load.expense.months,
             "no_placeholder_violations": not comp.placeholder_violations,
         }
         logger.info("Pipeline concluído. PDF: %s", comp.pdf_path)

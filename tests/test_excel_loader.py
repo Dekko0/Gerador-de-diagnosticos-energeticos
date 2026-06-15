@@ -24,9 +24,28 @@ def test_first_wins_policy(fixture_xlsx):
     assert res.resolved["<<consumoTotal>>"] == 47.95286775
 
 
-def test_markers_valid(load_result):
-    # F47='Grafico 1', F101='Grafico 2' presentes nas linhas esperadas.
-    assert load_result.marker_warnings == []
+def test_markers_valid_on_model(model_load_result):
+    # O modelo novo tem os 5 marcadores nas linhas esperadas
+    # (F47=Gráfico 1, F77=Gráfico 3, F102=Gráfico 2, F115=Gráfico 4, F151=Gráfico 5).
+    assert model_load_result.marker_warnings == []
+
+
+def test_model_has_new_graph_keys(model_load_result):
+    # As chaves dos novos gráficos (3/4/5) existem no modelo.
+    r = model_load_result.resolved
+    for k in ("<<ConsumoPontaUm>>", "<<ConsumoForaPontaDoze>>",
+              "<<DemandaPontaUm>>", "<<DemandaForaPontaDoze>>",
+              "<<despesaEnergiaUm>>", "<<demandaContratadaToleranciaNP>>",
+              "<<demandaContratadaToleranciaFP>>"):
+        assert k in r
+
+
+def test_new_graph_series_shapes(model_load_result):
+    # Séries posicionais alinhadas com os meses (Ponta/Fora Ponta/Despesa).
+    s, d, e = model_load_result.stacked, model_load_result.demand, model_load_result.expense
+    assert len(s.ponta) == len(s.fora_ponta) == len(s.months)
+    assert len(d.ponta) == len(d.fora_ponta) == len(d.months)
+    assert len(e.values) == len(e.months)
 
 
 def test_pie_excludes_total_and_zero(load_result):
