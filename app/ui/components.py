@@ -124,6 +124,58 @@ def render_upload_section():
 
 
 # --------------------------------------------------------------------------- #
+# Upload das fotos de inspeção (.png) — em ordem fixa
+# --------------------------------------------------------------------------- #
+#: (rótulo exibido, nome do arquivo gravado em Figuras/). Ordem é a da interface.
+INSPECTION_IMAGES: list[tuple[str, str]] = [
+    ("Quadro Elétrico Nr. 01", "NR01ACFT.png"),
+    ("Quadro Elétrico Nr. 02", "NR02ACFT.png"),
+    ("Quadro Elétrico Nr. 03", "NR03ACFT.png"),
+    ("Vista geral da subestação", "sub01.png"),
+    ("Transformador da unidade", "sub02.png"),
+    ("Dispositivos de proteção e acesso à subestação", "sub03.png"),
+]
+
+#: Assinatura (magic bytes) de um arquivo PNG válido.
+_PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
+
+
+def render_image_uploads() -> dict[str, bytes]:
+    """Renderiza os 6 uploads de fotos (.png) e devolve ``{nome_arquivo: bytes}``.
+
+    Exige PNG: o seletor já filtra por ``.png`` e, por segurança, validamos a
+    assinatura do arquivo — se não for um PNG válido, exibe erro e ignora.
+    """
+    st.markdown(
+        f'### {icon("photo_camera", color="primary")}Fotos da inspeção (.png)',
+        unsafe_allow_html=True,
+    )
+    st.caption(
+        "Opcional. Cada foto enviada substitui o respectivo placeholder no "
+        "relatório. **Somente arquivos .png** são aceitos."
+    )
+    images: dict[str, bytes] = {}
+    for label, target in INSPECTION_IMAGES:
+        up = st.file_uploader(
+            f"{label}  →  Figuras/{target}",
+            type=["png"],
+            key=f"img_{target}",
+        )
+        if up is None:
+            continue
+        data = up.getvalue()
+        if not up.name.lower().endswith(".png") or not data.startswith(_PNG_MAGIC):
+            st.error(
+                f"❌ '{html.escape(up.name)}' não é um PNG válido. "
+                "Envie a imagem em formato **.png**."
+            )
+            continue
+        images[target] = data
+        st.success(f"✓ {label}: {html.escape(up.name)}")
+    return images
+
+
+# --------------------------------------------------------------------------- #
 # Botão de ação
 # --------------------------------------------------------------------------- #
 def render_generate_button() -> bool:

@@ -24,12 +24,15 @@ import sys
 import tempfile
 from pathlib import Path
 
-# `streamlit run app/ui/app.py` coloca `app/ui/` em sys.path mas não a raiz
-# do projeto; garantimos (incondicionalmente) que `from app import ...` funcione,
-# tanto localmente quanto no Streamlit Cloud (onde __package__ pode não ser vazio).
+# `streamlit run app/ui/app.py` coloca `app/ui/` no INÍCIO do sys.path. Como
+# este arquivo se chama app.py, um `import app` acharia ESTE arquivo em vez do
+# pacote `app/` ("'app' is not a package"). Por isso forçamos a raiz do projeto
+# para a FRENTE do sys.path (removendo cópias antigas) — assim `from app import …`
+# resolve o pacote, tanto localmente quanto no Streamlit Cloud.
 _REPO_ROOT = str(Path(__file__).resolve().parents[2])
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
+while _REPO_ROOT in sys.path:
+    sys.path.remove(_REPO_ROOT)
+sys.path.insert(0, _REPO_ROOT)
 
 import streamlit as st  # noqa: E402
 
@@ -69,6 +72,7 @@ def _run_pipeline_with_progress(
     out_pdf: Path,
     cfg: Config,
     handler: _ListHandler,
+    images: dict[str, bytes] | None = None,
 ):
     """Executa o pipeline mostrando barra + steps inline; coleta logs."""
     placeholder = st.empty()
@@ -93,6 +97,7 @@ def _run_pipeline_with_progress(
             xlsx_path,
             out_pdf=out_pdf,
             config=cfg,
+            images=images,
             progress_callback=_on_progress,
         )
     finally:
@@ -126,6 +131,10 @@ def main() -> None:
     )
     st.divider()
 
+    # Fotos de inspeção (.png) — opcionais, em ordem fixa.
+    images = components.render_image_uploads()
+    st.divider()
+
     if not components.render_generate_button():
         st.stop()
 
@@ -145,6 +154,7 @@ def main() -> None:
             out_pdf=tmpdir / f"{stem}.pdf",
             cfg=cfg,
             handler=handler,
+            images=images,
         )
     except CompilationError as exc:
         st.error(f"⚠️ Falha na compilação/verificação: {exc}")

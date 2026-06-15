@@ -10,13 +10,27 @@ from app.config import Config
 from app import excel_loader
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+#: Exemplo legado, preenchido com dados reais (Gráficos 1 e 2 apenas).
 FIXTURE_XLSX = PROJECT_ROOT / "RAD CMEI Olga Benário.xlsx"
+#: Modelo novo (em branco) com os 5 marcadores de gráfico e as chaves novas.
+FIXTURE_MODEL = PROJECT_ROOT / "RD_MODELO.xlsx"
+
+
+# As planilhas são de uso LOCAL (não versionadas — ver .gitignore). Quando
+# ausentes (ex.: checkout limpo / Streamlit Cloud), os testes que dependem
+# delas são PULADOS em vez de falharem.
+@pytest.fixture(scope="session")
+def fixture_xlsx() -> Path:
+    if not FIXTURE_XLSX.exists():
+        pytest.skip(f"Planilha de teste local ausente: {FIXTURE_XLSX.name}")
+    return FIXTURE_XLSX
 
 
 @pytest.fixture(scope="session")
-def fixture_xlsx() -> Path:
-    assert FIXTURE_XLSX.exists(), f"Fixture não encontrada: {FIXTURE_XLSX}"
-    return FIXTURE_XLSX
+def model_xlsx() -> Path:
+    if not FIXTURE_MODEL.exists():
+        pytest.skip(f"Modelo local ausente: {FIXTURE_MODEL.name}")
+    return FIXTURE_MODEL
 
 
 @pytest.fixture
@@ -27,4 +41,14 @@ def config() -> Config:
 @pytest.fixture(scope="session")
 def load_result():
     """Resultado do excel_loader sobre a planilha de exemplo (cacheado)."""
+    if not FIXTURE_XLSX.exists():
+        pytest.skip(f"Planilha de teste local ausente: {FIXTURE_XLSX.name}")
     return excel_loader.load(FIXTURE_XLSX, Config())
+
+
+@pytest.fixture(scope="session")
+def model_load_result():
+    """Resultado do excel_loader sobre o modelo novo (cacheado)."""
+    if not FIXTURE_MODEL.exists():
+        pytest.skip(f"Modelo local ausente: {FIXTURE_MODEL.name}")
+    return excel_loader.load(FIXTURE_MODEL, Config())

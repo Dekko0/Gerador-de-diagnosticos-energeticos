@@ -3,18 +3,6 @@
 
 Os valores de referência constituem parâmetros técnicos utilizados como base comparativa para avaliar o desempenho energético da unidade consumidora. A partir dessa comparação, é possível estimar o potencial de economia de energia com a adoção de medidas de eficiência energética e classificar o nível de desempenho atual da edificação frente a padrões consolidados.
 
-As referências adotadas neste relatório foram extraídas de fontes públicas e reconhecidas no setor elétrico, com foco em edificações públicas e institucionais. As principais são:
-
-\begin{itemize}
-    \item \textbf{Programa Nacional de Conservação de Energia Elétrica (Procel):} coordenado pela Eletrobras, reúne diretrizes, dados técnicos e experiências consolidadas em eficiência energética, com foco em edificações públicas e institucionais~\cite{procel_geral}.
-    
-    \item \textbf{Guia de eficiência energética em prédios públicos:} publicado pela Eletrobras/Procel em 2011, apresenta valores de referência de consumo específico por tipologia (escolas, hospitais, prédios administrativos), além de orientações práticas para a condução de diagnósticos e implementação de melhorias~\cite{procel_guia2011}.
-    
-    \item \textbf{Manuais do Programa de Eficiência Energética da ANEEL (PROPEE):} estabelecem os critérios técnicos e metodológicos para a elaboração de projetos no âmbito regulado, incluindo orientações para diagnóstico, estruturação de propostas e avaliação de resultados~\cite{propee_aneel}.
-    
-    \item \textbf{Relatórios de diagnósticos energéticos:} elaborados no contexto de chamadas públicas, como a CP Procel 001/2016 e a CP ANEEL 001/2017, reúnem dados reais de consumo e desempenho energético de unidades públicas em diferentes regiões do país~\cite{diagnosticos_chamadas}.
-\end{itemize}
-
 A Tabela~\ref{tab:valores-referencia} apresenta, a título de comparação, valores típicos de consumo específico por tipo de edificação, úteis para análise do desempenho energético da unidade em estudo.
 
 
@@ -25,12 +13,8 @@ A Tabela~\ref{tab:valores-referencia} apresenta, a título de comparação, valo
 \begin{tabular}{|>{\columncolor[HTML]{1a3a5c}\color{white}}p{6cm}|p{6cm}|}
 \hline
 \textbf{Tipo de edificação} & \textbf{Consumo específico típico} \\ \hline
-Escola pública (fundamental)              & 4 a 8 kWh/m²/mês \\ \hline
-Unidade básica de saúde                   & 10 a 18 kWh/m²/mês \\ \hline
-Hospital de médio porte                   & 250 a 400 kWh/leito/mês \\ \hline
-Prédio administrativo                     & 8 a 12 kWh/m²/mês \\ \hline
-Unidade esportiva / ginásio               & 3 a 7 kWh/m²/mês \\ \hline
-Unidade com climatização central          & 15 a 22 kWh/m²/mês \\ \hline
+<<tipoEdificacao>>
+& <<consumoEspecificoTipico>> \\ \hline
 \end{tabular}
 \caption{Valores típicos de consumo específico por tipo de edificação pública}
 \label{tab:valores-referencia}
@@ -41,6 +25,53 @@ Unidade com climatização central          & 15 a 22 kWh/m²/mês \\ \hline
 \end{table}
 
 A comparação entre os indicadores reais da unidade e os valores de referência apresentados permite identificar desvios de desempenho, avaliando o grau de eficiência energética atual da edificação. Essa análise fornece uma base objetiva para a estimativa do potencial técnico de economia de energia, orientando a priorização das medidas propostas. Além disso, constitui um elemento fundamental para o dimensionamento das metas de economia a serem alcançadas com a implementação das ações, conforme estabelecido nos critérios metodológicos definidos no \textbf{Módulo 7 do Programa de Eficiência Energética da ANEEL (PROPEE)}~\cite{propee_aneel}, que tratam da quantificação de resultados e do cálculo da relação custo-benefício dos projetos.
+
+\vspace{1cm}
+
+A Tabela~\ref{tab:indicadores-desempenho} apresenta a avaliação dos índices de desempenho da unidade consumidora frente aos respectivos valores de \textit{benchmarking} adotados como referência.
+
+\begin{table}[H]
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.3}
+\begin{tabular}{|>{\columncolor[HTML]{1a3a5c}\color{white}}p{5.5cm}|p{3.5cm}|p{4.5cm}|}
+\hline
+\textbf{Índices} & \textbf{Média Ano} & \textbf{Benchmarking} \\ \hline
+Fator de Carga na Ponta            & <<fatorCargaPonta>>
+         & Maior que 0,80           \\ \hline
+Fator de Carga Fora Ponta          & <<fatorCargaForaPonta>>
+        & Maior que 0,60           \\ \hline
+Fator de Potência                  & <<fatorPotencia>>
+         & Maior que 0,92           \\ \hline
+Custo Médio Unitário (R\$/kWh)     & R\$ <<custoMedioUnitario>>
+     & Menor que 0,60           \\ \hline
+Consumo por Aluno (kWh/mês)        & <<consumoPessoa>>
+ kWh/mês    & Menor que 7 kWh/mês      \\ \hline
+\end{tabular}
+\caption{Avaliação dos índices de desempenho da unidade consumidora}
+\label{tab:indicadores-desempenho}
+\end{table}
+
+A análise conjunta dos indicadores permite identificar os seguintes pontos:
+
+\vspace{3cm}
+
+\noindent\textbf{Pontos Fortes:}
+\begin{itemize}
+    \item \textbf{Fator de Potência adequado} $\rightarrow$ sem risco de multa (Resolução ANEEL 1.000/2021).
+    \item \textbf{Consumo por Área e por Funcionário abaixo dos \textit{benchmarks}} $\rightarrow$ boa gestão estrutural e operacional.
+\end{itemize}
+
+\noindent\textbf{Pontos Críticos:}
+\begin{itemize}
+    \item \textbf{Fator de Carga (ponta e fora ponta) muito abaixo do ideal} $\rightarrow$ indica operação concentrada em poucas horas e/ou equipamentos subutilizados.
+    \item \textbf{Custo médio do kWh elevado (R\$ 0,73)} $\rightarrow$ possível inadequação tarifária e/ou de demanda contratada e/ou horário de ponta mal gerenciado.
+    \item \textbf{Consumo por Aluno elevado} $\rightarrow$ desperdício associado a atividades diurnas (luz acesa à toa, ar-condicionado mal regulado, equipamentos em \textit{stand-by}).
+\end{itemize}
+
+De forma geral, a unidade consumidora (\textbf{<<nomeUc>>}) apresenta eficiência estrutural boa (consumo por área e por funcionário), mas sofre de \textbf{ineficiência operacional} (baixo fator de carga e alto custo por kWh e por aluno).
+
+Existe, portanto, potencial técnico de economia que pode ser alcançado predominantemente com medidas de gerenciamento de cargas de climatização e iluminação, programação de horários de funcionamento e revisão do enquadramento tarifário.
 
 
 % Exemplo de tabela de referência (caso queira inserir valores típicos):

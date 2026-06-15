@@ -5,6 +5,10 @@
 # Saídas geradas
 output/*.pdf
 
+# Planilhas de dados/teste — usadas APENAS localmente, não versionar
+# (ex.: RD_MODELO.xlsx, "RAD CMEI Olga Benário.xlsx"; podem conter dados reais).
+*.xlsx
+
 # Tectonic — binário portátil não versionado (~50 MB). Baixe em
 # github.com/tectonic-typesetting/tectonic/releases e coloque em bin/.
 # No Streamlit Cloud, o Tectonic é baixado em runtime (app/tectonic_setup.py).

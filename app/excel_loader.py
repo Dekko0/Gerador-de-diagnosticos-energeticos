@@ -73,6 +73,39 @@ class BarData:
 
 
 @dataclass
+class StackedBarData:
+    """Dados do Gráfico 3 (barras empilhadas: Ponta + Fora Ponta)."""
+
+    months: list[str]
+    ponta: list[float]
+    fora_ponta: list[float]
+    dropped: list[str] = field(default_factory=list)
+
+
+@dataclass
+class DemandData:
+    """Dados do Gráfico 4 (demanda Ponta/Fora Ponta + linhas de contrato)."""
+
+    months: list[str]
+    ponta: list[float]
+    fora_ponta: list[float]
+    contratada: float | None = None
+    tolerancia: float | None = None
+    tolerancia_np: float | None = None
+    tolerancia_fp: float | None = None
+    dropped: list[str] = field(default_factory=list)
+
+
+@dataclass
+class ExpenseData:
+    """Dados do Gráfico 5 (despesa mensal com energia)."""
+
+    months: list[str]
+    values: list[float]
+    dropped: list[str] = field(default_factory=list)
+
+
+@dataclass
 class LoadResult:
     resolved: dict[str, object]
     occurrences: dict[str, list[KeyOccurrence]]
@@ -80,6 +113,9 @@ class LoadResult:
     planilha_keys: set[str]
     pie: PieData
     bar: BarData
+    stacked: StackedBarData
+    demand: DemandData
+    expense: ExpenseData
     marker_warnings: list[str]
 
     @property
@@ -230,6 +266,71 @@ def extract_bar(resolved: dict[str, object], config: Config) -> BarData:
     return BarData(months=months, values=values, dropped=dropped)
 
 
+def _extract_month_series(
+    resolved: dict[str, object], config: Config, value_key_lists: list[list[str]]
+) -> tuple[list[str], list[list[float]], list[str]]:
+    """Extrai meses + N séries alinhadas posicionalmente (1..12).
+
+    Usa as chaves de mês do Gráfico 2 (``<<mesUm>>`` ..) — compartilhadas pelos
+    gráficos 2/3/4/5. Descarta meses rotulados como 'Sem Histórico Disponível'.
+    Cada série em ``value_key_lists`` é uma lista de 12 chaves posicionais.
+    Valores ausentes/não-numéricos viram 0.0.
+    """
+    no_hist = config.graph2_no_history_label.strip().lower()
+    months: list[str] = []
+    series: list[list[float]] = [[] for _ in value_key_lists]
+    dropped: list[str] = []
+    for idx, mkey in enumerate(config.graph2_month_keys, start=1):
+        month_raw = resolved.get(mkey)
+        month = "" if month_raw is None else str(month_raw).strip()
+        if month.lower() == no_hist:
+            dropped.append(f"mês {idx} ({mkey}): sem histórico")
+            continue
+        months.append(month)
+        for s_idx, keys in enumerate(value_key_lists):
+            series[s_idx].append(_to_float(resolved.get(keys[idx - 1])) or 0.0)
+    return months, series, dropped
+
+
+def extract_stacked(resolved: dict[str, object], config: Config) -> StackedBarData:
+    """Gráfico 3: consumo Ponta vs. Fora Ponta por mês (barras empilhadas)."""
+    months, (ponta, fora_ponta), dropped = _extract_month_series(
+        resolved, config, [config.graph3_ponta_keys, config.graph3_fora_ponta_keys]
+    )
+    logger.info("Gráfico 3: %d mês(es); soma Ponta=%s, Fora Ponta=%s",
+                len(months), sum(ponta), sum(fora_ponta))
+    return StackedBarData(months=months, ponta=ponta, fora_ponta=fora_ponta, dropped=dropped)
+
+
+def extract_demand(resolved: dict[str, object], config: Config) -> DemandData:
+    """Gráfico 4: demanda Ponta/Fora Ponta por mês + linhas de contrato."""
+    months, (ponta, fora_ponta), dropped = _extract_month_series(
+        resolved, config, [config.graph4_ponta_keys, config.graph4_fora_ponta_keys]
+    )
+    contratada = _to_float(resolved.get(config.graph4_contratada_key))
+    tolerancia = _to_float(resolved.get(config.graph4_tolerancia_key))
+    tolerancia_np = _to_float(resolved.get(config.graph4_tolerancia_np_key))
+    tolerancia_fp = _to_float(resolved.get(config.graph4_tolerancia_fp_key))
+    logger.info(
+        "Gráfico 4: %d mês(es); contratada=%s, tol=%s, tolNP=%s, tolFP=%s",
+        len(months), contratada, tolerancia, tolerancia_np, tolerancia_fp,
+    )
+    return DemandData(
+        months=months, ponta=ponta, fora_ponta=fora_ponta,
+        contratada=contratada, tolerancia=tolerancia,
+        tolerancia_np=tolerancia_np, tolerancia_fp=tolerancia_fp, dropped=dropped,
+    )
+
+
+def extract_expense(resolved: dict[str, object], config: Config) -> ExpenseData:
+    """Gráfico 5: despesa mensal com energia elétrica (barras)."""
+    months, (values,), dropped = _extract_month_series(
+        resolved, config, [config.graph5_value_keys]
+    )
+    logger.info("Gráfico 5: %d mês(es); soma despesa=%s", len(months), sum(values))
+    return ExpenseData(months=months, values=values, dropped=dropped)
+
+
 def validate_markers(ws: Worksheet, config: Config) -> list[str]:
     """Confere os marcadores da coluna F (F47='Grafico 1', F101='Grafico 2').
 
@@ -237,7 +338,14 @@ def validate_markers(ws: Worksheet, config: Config) -> list[str]:
     aviso — não quebram o processamento.
     """
     warnings: list[str] = []
-    found: dict[str, list[int]] = {config.graph1_marker: [], config.graph2_marker: []}
+    expected_markers = (
+        (config.graph1_marker, config.graph1_marker_expected_row),
+        (config.graph2_marker, config.graph2_marker_expected_row),
+        (config.graph3_marker, config.graph3_marker_expected_row),
+        (config.graph4_marker, config.graph4_marker_expected_row),
+        (config.graph5_marker, config.graph5_marker_expected_row),
+    )
+    found: dict[str, list[int]] = {m: [] for m, _ in expected_markers}
     for row in range(1, ws.max_row + 1):
         val = ws[f"{config.col_marker}{row}"].value
         if isinstance(val, str):
@@ -245,10 +353,7 @@ def validate_markers(ws: Worksheet, config: Config) -> list[str]:
             if v in found:
                 found[v].append(row)
 
-    for marker, expected in (
-        (config.graph1_marker, config.graph1_marker_expected_row),
-        (config.graph2_marker, config.graph2_marker_expected_row),
-    ):
+    for marker, expected in expected_markers:
         rows = found[marker]
         if not rows:
             msg = f"Marcador '{marker}' não encontrado na coluna {config.col_marker}."
@@ -286,6 +391,9 @@ def load(xlsx_path: str | Path, config: Config | None = None) -> LoadResult:
     marker_warnings = validate_markers(ws, config)
     pie = extract_pie(resolved, config)
     bar = extract_bar(resolved, config)
+    stacked = extract_stacked(resolved, config)
+    demand = extract_demand(resolved, config)
+    expense = extract_expense(resolved, config)
 
     return LoadResult(
         resolved=resolved,
@@ -294,5 +402,8 @@ def load(xlsx_path: str | Path, config: Config | None = None) -> LoadResult:
         planilha_keys=set(resolved.keys()),
         pie=pie,
         bar=bar,
+        stacked=stacked,
+        demand=demand,
+        expense=expense,
         marker_warnings=marker_warnings,
     )
