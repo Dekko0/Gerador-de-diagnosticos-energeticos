@@ -32,10 +32,7 @@ def test_end_to_end_dod(tmp_path, fixture_xlsx):
     # 3) PDF tem múltiplas páginas (template abnTeX2 completo)
     assert result.summary["pages"] > 10
 
-    # 4) Conflito reportado nos avisos
-    assert any("consumoTotal" in w for w in result.warnings)
-
-    # 5) Valores formatados presentes
+    # 4) Valores formatados presentes
     try:
         import fitz
         with fitz.open(out_pdf) as doc:
@@ -43,7 +40,7 @@ def test_end_to_end_dod(tmp_path, fixture_xlsx):
     except ImportError:
         import pypdf
         text = "\n".join(p.extract_text() or "" for p in pypdf.PdfReader(str(out_pdf)).pages)
-    assert "05/03/2026" in text                 # data formatada (dd/mm/aaaa)
+    assert "27/01/2026" in text                 # data formatada (dd/mm/aaaa)
     assert _PTBR_NUMBER.search(text)            # há número no padrão pt-BR
     # Regressão do bug nº→nz: o glifo quebrado do ordinal (ž) não deve aparecer.
     assert "ž" not in text

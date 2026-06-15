@@ -1,27 +1,46 @@
 # -*- coding: utf-8 -*-
+from pathlib import Path
+
+from openpyxl import Workbook
+
 from app import excel_loader
 from app.config import Config
 
 
 def test_loads_expected_key_count(load_result):
-    # 216 chaves distintas na coluna D do exemplo preenchido.
-    assert len(load_result.resolved) == 216
+    # Nº de chaves distintas na coluna D do exemplo preenchido (CMEI Calabar).
+    assert len(load_result.resolved) == 239
 
 
-def test_detects_only_real_conflict(load_result):
-    # Apenas <<consumoTotal>> tem valores divergentes (47.95 vs 18.74).
-    conflict_keys = [c.key for c in load_result.conflicts]
-    assert conflict_keys == ["<<consumoTotal>>"]
+def test_fixture_is_conflict_free(load_result):
+    # A fixture preenchida atual não tem chaves duplicadas divergentes.
+    assert load_result.conflicts == []
 
 
-def test_last_wins_default(load_result):
-    # last-wins -> valor da linha 141 (contexto MWh, usado no capítulo 10).
-    assert load_result.resolved["<<consumoTotal>>"] == 18.74248
+def _make_xlsx(path: Path, rows: list[tuple[str, object]]) -> None:
+    """Cria uma planilha mínima na aba 'Tabela de Transferência' (col D/E)."""
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Tabela de Transferência"
+    ws["D1"], ws["E1"] = "chave", "valor"
+    for i, (key, val) in enumerate(rows, start=2):
+        ws[f"D{i}"], ws[f"E{i}"] = key, val
+    wb.save(path)
 
 
-def test_first_wins_policy(fixture_xlsx):
-    res = excel_loader.load(fixture_xlsx, Config(conflict_policy="first-wins"))
-    assert res.resolved["<<consumoTotal>>"] == 47.95286775
+def test_conflict_resolution_last_and_first_wins(tmp_path):
+    # Chave duplicada com valores divergentes -> conflito + política aplicada.
+    p = tmp_path / "conf.xlsx"
+    _make_xlsx(p, [("<<x>>", 10), ("<<y>>", 5), ("<<x>>", 20)])
+    last = excel_loader.load(p, Config())
+    assert [c.key for c in last.conflicts] == ["<<x>>"]
+    assert last.resolved["<<x>>"] == 20          # last-wins (default)
+    first = excel_loader.load(p, Config(conflict_policy="first-wins"))
+    assert first.resolved["<<x>>"] == 10         # first-wins
+    # valores iguais duplicados NÃO contam como conflito
+    p2 = tmp_path / "noconf.xlsx"
+    _make_xlsx(p2, [("<<z>>", 7), ("<<z>>", 7)])
+    assert excel_loader.load(p2, Config()).conflicts == []
 
 
 def test_markers_valid_on_model(model_load_result):
@@ -50,27 +69,37 @@ def test_new_graph_series_shapes(model_load_result):
 
 def test_pie_excludes_total_and_zero(load_result):
     pie = load_result.pie
-    # Motores=0 omitido; total excluído -> restam 4 fatias.
-    assert pie.labels == ["Iluminação", "Climatização", "Refrigeração", "Outros"]
-    assert pie.dropped_zero == ["Sistemas Motrizes"]
+    # Motores e Outros = 0 omitidos; total excluído -> restam 3 fatias.
+    assert pie.labels == ["Iluminação", "Climatização", "Refrigeração"]
+    assert pie.dropped_zero == ["Sistemas Motrizes", "Outros"]
     assert "<<consumoTotal>>" not in pie.labels
-    assert abs(pie.values[1] - 38.194308) < 1e-6
+    assert abs(pie.values[1] - 68.06293460113977) < 1e-6  # Climatização
 
 
-def test_bar_drops_sem_historico(load_result):
+def test_bar_has_full_history(load_result):
     bar = load_result.bar
-    assert bar.months == ["mai/25", "jul/25", "out/25", "nov/25",
-                          "dez/25", "jan/26", "fev/26", "mar/26"]
-    assert len(bar.values) == 8
-    assert len(bar.dropped) == 4
-    assert bar.values[0] == 996.6
+    # Fixture preenchida: 12 meses com histórico, nenhum descartado.
+    assert bar.months == ["dez/24", "jan/25", "fev/25", "mar/25", "mai/25",
+                          "jul/25", "out/25", "nov/25", "dez/25", "jan/26",
+                          "fev/26", "mar/26"]
+    assert len(bar.values) == 12
+    assert bar.dropped == []
+    assert abs(bar.values[0] - 3218.1) < 1e-6
 
 
-def test_bar_drop_zero_optional(fixture_xlsx):
-    res = excel_loader.load(fixture_xlsx, Config(graph2_drop_zero_values=True))
-    # Sem zeros entre os 8 meses com histórico -> continua 8.
-    assert len(res.bar.values) == 8
-    assert all(v != 0 for v in res.bar.values)
+def test_stacked_and_expense_have_data(load_result):
+    # Gráficos 3 e 5 têm dados reais na fixture preenchida.
+    assert sum(load_result.stacked.ponta) > 0
+    assert sum(load_result.stacked.fora_ponta) > 0
+    assert sum(load_result.expense.values) > 0
+
+
+def test_demand_reference_lines(load_result):
+    # Gráfico 4: contratada e tolerância única presentes; NP/FP ausentes.
+    d = load_result.demand
+    assert d.contratada == 110.0
+    assert d.tolerancia == 115.5
+    assert d.tolerancia_np is None and d.tolerancia_fp is None
 
 
 def test_planilha_only_keys(load_result):
