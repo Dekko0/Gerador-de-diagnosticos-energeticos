@@ -48,7 +48,7 @@ _PALETTE = [
 ]
 _BAR_COLOR = "#1F3864"
 # Cores Ponta / Fora Ponta (gráficos 3 e 4), no estilo do modelo de demanda.
-_PONTA_COLOR = "#FF7F0E"        # azul claro
+_PONTA_COLOR = "#FF7F0E"        # laranja claro
 _FORA_PONTA_COLOR = "#1F4E79"   # azul escuro
 _EXPENSE_COLOR = "#2E7D32"      # verde (despesa)
 # Linhas de referência do Gráfico 4.
