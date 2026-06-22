@@ -34,7 +34,6 @@ brazil,				% o último idioma é o principal do documento
 \RequirePackage{lmodern}			% Usa a fonte Latin Modern
 \RequirePackage[T1]{fontenc}		% Selecao de codigos de fonte.
 \RequirePackage[utf8]{inputenc}		% Codificacao do documento (conversão automática dos acentos)
-\RequirePackage{textcomp}			% Símbolos texto: \textmu \texttimes \textonehalf \textperiodcentered etc.
 \RequirePackage{indentfirst}		% Indenta o primeiro parágrafo de cada seção.
 \RequirePackage{color}				% Controle das cores
 \RequirePackage{graphicx}			% Inclusão de gráficos
